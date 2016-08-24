@@ -24,7 +24,9 @@ var WIDTH = window.innerWidth,
 	MAP_WIDTH = map.length,
 	MAP_HEIGHT = map[0].length;
 
-var scene, camera, controls, geometry, material, mesh, loader, renderer;
+var scene, camera, controls, geometry, material, mesh, loader, renderer, clock;
+
+var mouse = {x:0, y:0};
 
 $(document).ready(function(){
 	$('body').append('<div id="intro">Click to start</div>');
@@ -38,13 +40,14 @@ $(document).ready(function(){
 
 
 function  init(){
-	console.log(MAP_HEIGHT + ' ' + MAP_WIDTH);
+
+	clock = new THREE.Clock();
 	scene = new THREE.Scene(); // Holds all objects in the canvas
 	scene.fog = new THREE.FogExp2(0xD6F1FF, 0.0005); // color, density
 	
 	camera = new THREE.PerspectiveCamera(60, ASPECT, 1, 10000); // FOV, aspect, near, far
 	camera.position.y = UNITSIZE * .2;
-	//scene.add(camera);
+	scene.add(camera);
 	
 	controls = new THREE.FirstPersonControls(camera);
 	controls.movementSpeed = MOVESPEED;
@@ -53,23 +56,24 @@ function  init(){
 	controls.noFly = true;
 	
 	//renderer
-	renderer = new THREE.WebGLRenderer({ antialias: true } );
-	
-	initWorld();
-	
+	renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setSize(WIDTH, HEIGHT);
-	renderer.setClearColor( scene.fog.color );
-	renderer.setPixelRatio( window.devicePixelRatio );
+	renderer.setClearColor(scene.fog.color);
+	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.autoClear = false;
 	renderer.domElement.style.position = "relative";
 	document.body.appendChild(renderer.domElement);
-
+	
+	initWorld();
 }
 
 
 function animate(){
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);
+	
+	var delta = clock.getDelta();
+	controls.update(delta); // Move camera
 }
 
 function initWorld() {	
@@ -85,13 +89,13 @@ function initWorld() {
 	
 	texture.anisotropy = maxAnisotropy;
 	texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-	texture.repeat.set(512, 512);
+	texture.repeat.set(MAP_WIDTH, MAP_HEIGHT);
 
 	var geometry = new THREE.PlaneBufferGeometry(UNITSIZE * MAP_WIDTH, UNITSIZE * MAP_HEIGHT);
 
 	var floor = new THREE.Mesh(geometry, material);
 	floor.rotation.x = - Math.PI / 2;
-
+	
 	scene.add(floor);
 
 	//lighting
@@ -124,3 +128,4 @@ function initWorld() {
 		}
 	}
 }
+
