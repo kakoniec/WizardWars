@@ -1,3 +1,16 @@
+var map = [/*0 1 2 3 4 5 6 7 8 9*/
+			[1,1,1,1,1,1,1,1,1,1], //0
+			[1,0,0,0,0,0,0,0,0,1], //1
+			[1,0,0,0,0,0,0,0,0,1], //2
+			[1,0,0,0,0,0,0,0,0,1], //3
+			[1,0,0,0,1,0,0,0,0,1], //4
+			[1,0,0,0,0,1,0,0,0,1], //5
+			[1,0,0,0,0,0,0,0,0,1], //6
+			[1,0,0,0,0,0,0,0,0,1], //7
+			[1,0,0,0,0,0,0,0,0,1], //8
+			[1,1,1,1,1,1,1,1,1,1], //9
+];
+
 var WIDTH = window.innerWidth,
 	HEIGHT = window.innerHeight,
 	ASPECT = WIDTH / HEIGHT,
@@ -7,7 +20,9 @@ var WIDTH = window.innerWidth,
 	LOOKSPEED = 0.075,
 	BULLETMOVESPEED = MOVESPEED * 5,
 	NUMAI = 5,
-	PROJECTILEDAMAGE = 20;
+	PROJECTILEDAMAGE = 20,
+	MAP_WIDTH = map.length,
+	MAP_HEIGHT = map[0].length;
 
 var scene, camera, controls, geometry, material, mesh, loader, renderer;
 
@@ -23,7 +38,7 @@ $(document).ready(function(){
 
 
 function  init(){
-	console.log('init started');
+	console.log(MAP_HEIGHT + ' ' + MAP_WIDTH);
 	scene = new THREE.Scene(); // Holds all objects in the canvas
 	scene.fog = new THREE.FogExp2(0xD6F1FF, 0.0005); // color, density
 	
@@ -37,20 +52,8 @@ function  init(){
 	controls.lookVertical = false; // Temporary solution; play on flat surfaces only
 	controls.noFly = true;
 	
-		//renderer
+	//renderer
 	renderer = new THREE.WebGLRenderer({ antialias: true } );
-	
-			// Lighting
-	var light = new THREE.DirectionalLight( 0xffffff, 1.5 );
-	light.position.set( 1, 1, 1 );
-	scene.add( light );
-
-	var light = new THREE.DirectionalLight( 0xffffff, 0.75 );
-	light.position.set( -1, - 0.5, -1 );
-	scene.add( light );
-
-	
-	scene.add( new THREE.AmbientLight( 0xeef0ff ) );
 	
 	initWorld();
 	
@@ -65,50 +68,59 @@ function  init(){
 
 
 function animate(){
-	console.log('animate started');
 	renderer.render(scene, camera);
-
+	requestAnimationFrame(animate);
 }
 
-function initWorld() {
-	console.log('initWorld started');
+function initWorld() {	
 	
-
 	//floor
-	// geometry = new THREE.PlaneGeometry(2000, 2000, 100, 100);
-	// geometry.applyMatrix( new THREE.Matrix4().makeRotationX( - Math.PI / 2 ) );
-	
-	// loader = new THREE.TextureLoader();
-	// var floorTex = loader.load('textures/stone.jpg');
-	// floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
-	// floorTex.repeat.set(200,200);
-	// material = new THREE.MeshPhongMaterial({color: 0x3c3c3c, map: floorTex});
-
-	// mesh = new THREE.Mesh( geometry, material );
-	// scene.add( mesh );
-	
 	var textureLoader = new THREE.TextureLoader();
 
 	var maxAnisotropy = renderer.getMaxAnisotropy();
 
-	var texture1 = textureLoader.load( "textures/stone.jpg" );
-	var material1 = new THREE.MeshPhongMaterial();
-	material1.map = texture1;
+	var texture = textureLoader.load("textures/stone.jpg");
+	var material = new THREE.MeshPhongMaterial();
+	material.map = texture;
 	
-	texture1.anisotropy = maxAnisotropy;
-	texture1.wrapS = texture1.wrapT = THREE.RepeatWrapping;
-	texture1.repeat.set( 512, 512 );
+	texture.anisotropy = maxAnisotropy;
+	texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+	texture.repeat.set(512, 512);
 
-	var geometry = new THREE.PlaneBufferGeometry( 100, 100 );
+	var geometry = new THREE.PlaneBufferGeometry(UNITSIZE * MAP_WIDTH, UNITSIZE * MAP_HEIGHT);
 
-	var mesh1 = new THREE.Mesh( geometry, material1 );
-	mesh1.rotation.x = - Math.PI / 2;
-	mesh1.scale.set( 1000, 1000, 1000 );
+	var floor = new THREE.Mesh(geometry, material);
+	floor.rotation.x = - Math.PI / 2;
 
+	scene.add(floor);
 
-	scene.add( mesh1 );
+	//lighting
+	var light = new THREE.DirectionalLight(0xffffff, 1.5);
+	light.position.set(1, 1, 1);
+	scene.add(light);
 
+	var light = new THREE.DirectionalLight(0xffffff, 0.75);
+	light.position.set(-1, -0.5, -1);
+	scene.add(light);
 	
+	scene.add(new THREE.AmbientLight(0xeef0ff));
 	
-	
+	//walls
+	var wallGeometry = new THREE.CubeGeometry(UNITSIZE, WALLHEIGHT, UNITSIZE);
+	var materials = [
+	                 new THREE.MeshLambertMaterial({map: textureLoader.load('textures/crate.gif')}),
+	                 new THREE.MeshLambertMaterial({map: textureLoader.load('textures/crate.gif')}),
+	                 new THREE.MeshLambertMaterial({color: 0xFBEBCD}),
+	                 ];
+	for (var i = 0; i < MAP_WIDTH; i++) {
+		for (var j = 0, m = map[i].length; j < m; j++) {
+			if (map[i][j]) {
+				var wall = new THREE.Mesh(wallGeometry, materials[map[i][j]-1]);
+				wall.position.x = (i - MAP_WIDTH/2) * UNITSIZE;
+				wall.position.y = WALLHEIGHT/2;
+				wall.position.z = (j - MAP_WIDTH/2) * UNITSIZE;
+				scene.add(wall);
+			}
+		}
+	}
 }
