@@ -1,12 +1,12 @@
 var map = [/*0 1 2 3 4 5 6 7 8 9*/
 			[1,1,1,1,1,1,1,1,1,1], //0
 			[1,0,0,0,0,0,0,0,0,1], //1
-			[1,0,0,0,0,0,0,0,0,1], //2
-			[1,0,0,0,0,0,0,0,0,1], //3
-			[1,0,0,0,1,0,0,0,0,1], //4
-			[1,0,0,0,0,1,0,0,0,1], //5
-			[1,0,0,0,0,0,0,0,0,1], //6
-			[1,0,0,0,0,0,0,0,0,1], //7
+			[1,0,2,2,2,2,0,0,0,1], //2
+			[1,0,0,2,0,0,0,2,2,1], //3
+			[1,0,0,0,2,0,0,0,0,1], //4
+			[1,0,0,0,0,2,0,0,0,1], //5
+			[1,0,0,0,0,2,0,2,2,1], //6
+			[1,0,0,0,2,2,0,0,0,1], //7
 			[1,0,0,0,0,0,0,0,0,1], //8
 			[1,1,1,1,1,1,1,1,1,1], //9
 ];
@@ -15,7 +15,7 @@ var WIDTH = window.innerWidth,
 	HEIGHT = window.innerHeight,
 	ASPECT = WIDTH / HEIGHT,
 	UNITSIZE = 250,
-	WALLHEIGHT = UNITSIZE / 2,
+	WALLHEIGHT = UNITSIZE * 1.5;
 	MOVESPEED = 100,
 	LOOKSPEED = 0.075,
 	BULLETMOVESPEED = MOVESPEED * 5,
@@ -43,7 +43,7 @@ function  init(){
 
 	clock = new THREE.Clock();
 	scene = new THREE.Scene(); // Holds all objects in the canvas
-	scene.fog = new THREE.FogExp2(0xD6F1FF, 0.0005); // color, density
+	scene.fog = new THREE.FogExp2(0xcccfbc, 0.00125); // color, density
 	
 	camera = new THREE.PerspectiveCamera(60, ASPECT, 1, 10000); // FOV, aspect, near, far
 	camera.position.y = UNITSIZE * .2;
@@ -111,6 +111,7 @@ function initWorld() {
 	var texture = textureLoader.load("textures/stone.jpg");
 	var material = new THREE.MeshPhongMaterial();
 	material.map = texture;
+	material.bumpMap = textureLoader.load('textures/stone-bump.jpg');
 	
 	texture.anisotropy = maxAnisotropy;
 	texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -118,6 +119,7 @@ function initWorld() {
 
 	var geometry = new THREE.PlaneBufferGeometry(UNITSIZE * MAP_WIDTH, UNITSIZE * MAP_HEIGHT);
 
+	geometry.computeVertexNormals();
 	var floor = new THREE.Mesh(geometry, material);
 	floor.rotation.x = - Math.PI / 2;
 	
@@ -132,13 +134,14 @@ function initWorld() {
 	light.position.set(-1, -0.5, -1);
 	scene.add(light);
 	
-	scene.add(new THREE.AmbientLight(0xeef0ff));
+	//scene.add(new THREE.AmbientLight(0xeef0ff));
 	
 	//walls
 	var wallGeometry = new THREE.CubeGeometry(UNITSIZE, WALLHEIGHT, UNITSIZE);
+	//wallGeometry.computeVertexNormals();
 	var materials = [
-	                 new THREE.MeshLambertMaterial({map: textureLoader.load('textures/crate.gif')}),
-	                 new THREE.MeshLambertMaterial({map: textureLoader.load('textures/crate.gif')}),
+	                 new THREE.MeshPhongMaterial({map: textureLoader.load('textures/brick-wall.jpg'), bumpMap: textureLoader.load('textures/brick-wall-bump.jpg')}),
+	                 new THREE.MeshLambertMaterial({map: textureLoader.load('textures/hedge.jpg'), bumpMap: textureLoader.load('textures/hedge_bump.jpg')}),
 	                 new THREE.MeshLambertMaterial({color: 0xFBEBCD}),
 	                 ];
 	for (var i = 0; i < MAP_WIDTH; i++) {
