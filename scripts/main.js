@@ -22,11 +22,15 @@ var WIDTH = window.innerWidth,
 	NUMAI = 5,
 	PROJECTILEDAMAGE = 20,
 	MAP_WIDTH = map.length,
-	MAP_HEIGHT = map[0].length;
+	MAP_HEIGHT = map[0].length,
+	NUMBER_OF_BIRDS = 1,
+	BIRD_VELOCITY_X = Math.random() * 2 - 1,
+	BIRD_VELOCITY_Y = Math.random() * 2 - 1,
+	BIRD_VELOCITY_Z = Math.random() * 2 - 1;
 
 var scene, camera, controls, geometry, material, mesh, loader, renderer, clock, backgroundCamera, backgroundScene;
 
-var mouse = {x:0, y:0};
+var mouse = {x:0, y:0}, birds = [];
 
 $(document).ready(function(){
 	$('body').append('<div id="intro" class="custom" >Click to start</div>');
@@ -89,10 +93,29 @@ function  init(){
 	document.addEventListener('mousemove', onMouseMove, false);
 	
 	initWorld();
+	
+	initBirds();
 }
 
 
 function animate(){
+	for ( var i = 0, il = birds.length; i < il; i++ ) {
+
+					var bird = birds[ i ];
+				//	bird.position.copy( birds[ i ].position );
+
+					color = bird.material.color;
+					color.r = color.g = color.b = ( 500 - bird.position.z ) / 1000;
+
+					bird.rotation.y = Math.atan2( - Math.random() * 2 - 1, Math.random() * 2 - 1 );
+					bird.rotation.z = Math.asin( Math.random() * 2 - 1 / 3 );
+
+					bird.phase = ( bird.phase + ( Math.max( 0, bird.rotation.z ) + 0.1 )  ) % 62.83;
+					bird.geometry.vertices[ 5 ].y = bird.geometry.vertices[ 4 ].y = Math.sin( bird.phase ) * 5;
+
+				}
+
+				
 	renderer.render(backgroundScene, backgroundCamera);
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);
@@ -167,3 +190,13 @@ function onMouseMove(event) {
 	mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
 };
 
+function initBirds() {
+	var bird; 
+	for (var i = 0; i < NUMBER_OF_BIRDS; i++) {
+		bird = birds[ i ] = new THREE.Mesh( new Bird(), new THREE.MeshBasicMaterial( { color:0x000000, side: THREE.DoubleSide } ) );
+					bird.phase = Math.floor( Math.random() * 62.83 );
+					bird.position.z = -50;
+					bird.position.y = 50;
+					scene.add( bird );
+	}
+}
