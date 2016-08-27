@@ -15,7 +15,7 @@ var WIDTH = window.innerWidth,
 	HEIGHT = window.innerHeight,
 	ASPECT = WIDTH / HEIGHT,
 	UNITSIZE = 250,
-	WALLHEIGHT = UNITSIZE / 3,
+	WALLHEIGHT = UNITSIZE / 2,
 	MOVESPEED = 100,
 	LOOKSPEED = 0.075,
 	BULLETMOVESPEED = MOVESPEED * 5,
@@ -24,12 +24,12 @@ var WIDTH = window.innerWidth,
 	MAP_WIDTH = map.length,
 	MAP_HEIGHT = map[0].length;
 
-var scene, camera, controls, geometry, material, mesh, loader, renderer, clock;
+var scene, camera, controls, geometry, material, mesh, loader, renderer, clock, backgroundCamera, backgroundScene;
 
 var mouse = {x:0, y:0};
 
 $(document).ready(function(){
-	$('body').append('<div id="intro">Click to start</div>');
+	$('body').append('<div id="intro" class="custom" >Click to start</div>');
 	$('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) {
 		e.preventDefault();
 		$(this).fadeOut();
@@ -55,6 +55,27 @@ function  init(){
 	controls.lookVertical = false; // Temporary solution; play on flat surfaces only
 	controls.noFly = true;
 	
+	
+	 // Load the background texture
+    var textureLoader = new THREE.TextureLoader();	 
+    var texture = textureLoader.load( 'imports/sky.jpg' );
+    var backgroundMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(2, 2, 0),
+            new THREE.MeshBasicMaterial({
+                map: texture
+            }));
+
+    backgroundMesh.material.depthTest = false;
+    backgroundMesh.material.depthWrite = false;
+
+    // Create your background scene
+    backgroundScene = new THREE.Scene();
+    backgroundCamera = new THREE.Camera();
+    backgroundScene .add(backgroundCamera );
+    backgroundScene .add(backgroundMesh );
+
+	
+	
 	//renderer
 	renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setSize(WIDTH, HEIGHT);
@@ -62,13 +83,17 @@ function  init(){
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.autoClear = false;
 	renderer.domElement.style.position = "relative";
+	renderer.domElement.style.backgroundColor = '#D6F1FF'; // easier to see
 	document.body.appendChild(renderer.domElement);
+	
+	document.addEventListener('mousemove', onMouseMove, false);
 	
 	initWorld();
 }
 
 
 function animate(){
+	renderer.render(backgroundScene, backgroundCamera);
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);
 	
@@ -128,4 +153,14 @@ function initWorld() {
 		}
 	}
 }
+
+
+// Follows the mouse event
+function onMouseMove(event) {
+
+	// Update the mouse variable
+	event.preventDefault();
+	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+	mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+};
 
