@@ -42,6 +42,20 @@ $(document).ready(function(){
 	});
 });
 
+// Handle window resizing
+$(window).resize(function() {
+	WIDTH = window.innerWidth;
+	HEIGHT = window.innerHeight;
+	ASPECT = WIDTH / HEIGHT;
+	if (cam) {
+		cam.aspect = ASPECT;
+		cam.updateProjectionMatrix();
+	}
+	if (renderer) {
+		renderer.setSize(WIDTH, HEIGHT);
+	}
+	$('#intro, #hurt').css({width: WIDTH, height: HEIGHT,});
+});
 
 function  init(){
 
