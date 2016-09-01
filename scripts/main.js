@@ -68,6 +68,7 @@ function  init(){
 	
 	camera = new THREE.PerspectiveCamera(60, ASPECT, 1, 10000); // FOV, aspect, near, far
 	camera.position.y = UNITSIZE * .2;
+	camera.position.z = -315;
 	scene.add(camera);
 	
 	controls = new THREE.FirstPersonControls(camera);
