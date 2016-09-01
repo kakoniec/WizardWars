@@ -174,6 +174,8 @@ function animate(){
 			//bullets[i].translateY(speed * bullets[i].direction.y);
 			b.translateZ(speed * d.z);
 		}
+		
+		
 	}	
 	
 	// Update AI.
@@ -217,8 +219,19 @@ function animate(){
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);
 	
+	//Death
+	if (health <= 0) {
+		$(renderer.domElement).fadeOut();
+		$('#intro').fadeIn();
+		$('#intro').html('Ouch! Click to restart...');
+		$('#intro').one('click', function() {
+			location = location;
+		});
+	}
+	
 	var delta = clock.getDelta();
 	controls.update(delta); // Move camera
+	
 }
 
 function addOpponent() {
