@@ -128,7 +128,7 @@ function  init(){
 	document.addEventListener('mousemove', onMouseMove, false);
 	
 	initWorld();
-	
+
 	initOpponents();
 	
 	// Shoot on click
@@ -155,14 +155,15 @@ function animate(){
 			scene.remove(b);
 			continue;
 		}
-		// Collide with AI
+		hit = false;
+		//Collide with AI
 		var hit = false;
 		for (var j = opponents.length-1; j >= 0; j--) {
 			var a = opponents[j];
 			var v = a.geometry.vertices[0];
 			var c = a.position;
 			var x = Math.abs(v.x), z = Math.abs(v.z);
-			//console.log(Math.round(p.x), Math.round(p.z), c.x, c.z, x, z);
+
 			if (p.x < c.x + x && p.x > c.x - x &&
 					p.z < c.z + z && p.z > c.z - z &&
 					b.owner != a) {
@@ -295,6 +296,96 @@ function addOpponent() {
 	scene.add(o);
 }
 
+function addChessFigure() {
+	// var mtlLoader = new THREE.MTLLoader();
+	// mtlLoader.setPath('obj/Chess/');
+	// mtlLoader.load('chess.mtl', function(materials) {
+		// materials.preload();
+		// var objLoader = new THREE.OBJLoader();
+		// objLoader.setMaterials(materials);
+		// objLoader.setPath('obj/Chess/');
+		// objLoader.load('chess.obj', function(o) {
+			// var c = getMapSector(camera.position);
+			// do {
+				// var x = getRandBetween(0, MAP_WIDTH-1);
+				// var z = getRandBetween(0, MAP_HEIGHT-1);
+			// } while (map[x][z] > 0 || (x == c.x && z == c.z));
+			// x = Math.floor(x - MAP_WIDTH/2) * UNITSIZE;
+			// z = Math.floor(z - MAP_WIDTH/2) * UNITSIZE;
+			// o.position.set(x, UNITSIZE * 0.15, z);
+			// o.health = 100;
+			// o.pathPos = 1;
+			// o.lastRandomX = Math.random();
+			// o.lastRandomZ = Math.random();
+			// o.lastShot = Date.now(); // Higher-fidelity timers aren't a big deal here.
+			// opponents.push(o);
+			// scene.add(o);
+		// });
+	// });
+	
+	var mesh = null;
+
+	var mtlLoader = new THREE.MTLLoader();
+	mtlLoader.setBaseUrl( "obj/Chess/" );
+	mtlLoader.setPath( "obj/Chess/" );
+	mtlLoader.load( 'chess.mtl', function( materials ) {
+
+		materials.preload();
+
+		var objLoader = new THREE.OBJLoader();
+		objLoader.setMaterials( materials );
+		objLoader.setPath( "obj/Chess/" );
+		objLoader.load( 'chess.obj', function ( o ) {
+
+		var c = getMapSector(camera.position);
+		do {
+			var x = getRandBetween(0, MAP_WIDTH-1);
+			var z = getRandBetween(0, MAP_HEIGHT-1);
+		} while (map[x][z] > 0 || (x == c.x && z == c.z));
+		x = Math.floor(x - MAP_WIDTH/2) * UNITSIZE;
+		z = Math.floor(z - MAP_WIDTH/2) * UNITSIZE;
+		o.position.set(x, UNITSIZE * 0.15, z);
+		o.health = 100;
+		o.pathPos = 1;
+		o.lastRandomX = Math.random();
+		o.lastRandomZ = Math.random();
+		o.lastShot = Date.now(); // Higher-fidelity timers aren't a big deal here.
+		opponents.push(o);
+		scene.add(o);
+
+		} );
+
+	} );
+	
+	// var objLoader = new THREE.OBJLoader();
+    // var material = new THREE.MeshBasicMaterial({color: 'yellow', side: THREE.DoubleSide});
+    // objLoader.load('obj/Chess/chess.obj', function (obj) {
+        // obj.traverse(function (o) {
+
+            // if (o instanceof THREE.Mesh) {
+                // o.material = material;
+				// var c = getMapSector(camera.position);
+				// do {
+					// var x = getRandBetween(0, MAP_WIDTH-1);
+					// var z = getRandBetween(0, MAP_HEIGHT-1);
+				// } while (map[x][z] > 0 || (x == c.x && z == c.z));
+				// x = Math.floor(x - MAP_WIDTH/2) * UNITSIZE;
+				// z = Math.floor(z - MAP_WIDTH/2) * UNITSIZE;
+				// o.position.set(x, UNITSIZE * 0.15, z);
+				// o.health = 100;
+				// o.pathPos = 1;
+				// o.lastRandomX = Math.random();
+				// o.lastRandomZ = Math.random();
+				// o.lastShot = Date.now(); // Higher-fidelity timers aren't a big deal here.
+				// opponents.push(o);
+				// scene.add(o);
+            // }
+
+        // });
+
+    // });
+}
+
 function initWorld() {	
 	
 	//floor
@@ -327,6 +418,9 @@ function initWorld() {
 	var light = new THREE.DirectionalLight(0xffffff, 0.75);
 	light.position.set(-1, -0.5, -1);
 	scene.add(light);
+	
+	var light = new THREE.AmbientLight( 0x404040 ); // soft white light
+	scene.add( light );
 	
 	//scene.add(new THREE.AmbientLight(0xeef0ff));
 	
