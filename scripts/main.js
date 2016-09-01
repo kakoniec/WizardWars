@@ -32,10 +32,24 @@ var scene, camera, controls, geometry, material, mesh, loader, renderer, clock, 
 
 var aiGeo = new THREE.CubeGeometry(40, 40, 40);
 
+var canvas, context;
+
 var opponents = [], bullets = [];
 var runAnim = true, mouse = { x: 0, y: 0 }, kills = 0, health = 100;
+
+	var object1 = {
+		x: 20,
+		y: 30,
+		width: 300,
+		height: 20
+	};
+
+	var maxHealth = 100;
+	
 $(document).ready(function(){
 	$('body').append('<div id="intro" class="custom" >Click to start</div>');
+		//health bar
+	$('body').append('<canvas id="canvas" width="500" height="50"></canvas>');
 	$('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) {
 		e.preventDefault();
 		$(this).fadeOut();
@@ -53,6 +67,7 @@ $(window).resize(function() {
 		camera.aspect = ASPECT;
 		camera.updateProjectionMatrix();
 	}
+	
 	if (renderer) {
 		renderer.setSize(WIDTH, HEIGHT);
 	}
@@ -96,12 +111,18 @@ function  init(){
     backgroundScene .add(backgroundCamera );
     backgroundScene .add(backgroundMesh );
 
-	
+	// setup canvas for health bar
+	canvas = document.getElementById('canvas');
+	canvas.width = 500;
+	canvas.height = 50;
+	context = canvas.getContext('2d');
+
 	
 	//renderer
 	renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setSize(WIDTH, HEIGHT);
 	renderer.domElement.style.backgroundColor = '#D6F1FF'; // easier to see
+	renderer.autoClear = false;
 	document.body.appendChild(renderer.domElement);
 	
 	document.addEventListener('mousemove', onMouseMove, false);
@@ -215,6 +236,25 @@ function animate(){
 			a.lastShot = Date.now();
 		}
 	}			
+	
+	//health bar
+	// Clear the canvas
+    canvas.width = canvas.width;
+    
+    // Calculate health bar percent
+    var percent = health / maxHealth;
+
+    context.fillStyle = "Red";
+    context.font = "18px sans-serif";
+    context.fillText("Life " +health+"/"+maxHealth, 20, 20);
+
+    context.fillStyle = "black";
+    context.fillRect(object1.x, object1.y, object1.width, object1.height);
+
+    context.fillStyle = "red";
+    context.fillRect(object1.x, object1.y, object1.width * percent, object1.height);
+	
+	//renderer
 	renderer.render(backgroundScene, backgroundCamera);
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);
