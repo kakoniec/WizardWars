@@ -281,8 +281,8 @@ function initWorld() {
 	var wallGeometry = new THREE.CubeGeometry(UNITSIZE, WALLHEIGHT, UNITSIZE);
 	//wallGeometry.computeVertexNormals();
 	var materials = [
-	                 new THREE.MeshPhongMaterial({map: textureLoader.load('textures/brick-wall.jpg'), bumpMap: textureLoader.load('textures/brick-wall-bump.jpg')}),
-	                 new THREE.MeshLambertMaterial({map: textureLoader.load('textures/hedge.jpg'), bumpMap: textureLoader.load('textures/hedge_bump.jpg')}),
+	                 new THREE.MeshPhongMaterial({map: textureLoader.load('textures/brick-wall.jpg'), bumpMap: textureLoader.load('textures/brick-wall-bump.jpg'), side: THREE.DoubleSide}),
+	                 new THREE.MeshLambertMaterial({map: textureLoader.load('textures/hedge.jpg'), bumpMap: textureLoader.load('textures/hedge_bump.jpg'), side: THREE.DoubleSide}),
 	                 new THREE.MeshLambertMaterial({color: 0xFBEBCD}),
 	                 ];
 	for (var i = 0; i < MAP_WIDTH; i++) {
