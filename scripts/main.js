@@ -36,7 +36,8 @@ var aiGeo2 = new THREE.CylinderGeometry( 1, 40*3, 40*3, 4 );
 var canvas, context;
 
 var opponents = [], bullets = [];
-var runAnim = true, mouse = { x: 0, y: 0 }, kills = 0, health = 100;
+var maxHealth = 300;
+var runAnim = true, mouse = { x: 0, y: 0 }, kills = 0, health = maxHealth;
 
 	var object1 = {
 		x: 20,
@@ -45,7 +46,7 @@ var runAnim = true, mouse = { x: 0, y: 0 }, kills = 0, health = 100;
 		height: 20
 	};
 
-	var maxHealth = 100;
+
 	
 $(document).ready(function(){
 	$('body').append('<div id="intro" class="custom" >Click to start</div>');
@@ -208,6 +209,7 @@ function animate(){
 		if (a.health <= 0) {
 			opponents.splice(i, 1);
 			scene.remove(a);
+			parts.push(new ExplodeAnimation(a.position.x, a.position.y, a.position.z));
 			kills++;
 			$('#score').html(kills * 100);
 			addOpponent();
@@ -271,6 +273,11 @@ function animate(){
 			location = location;
 		});
 	}
+	
+	var pCount = parts.length;
+          while(pCount--) {
+            parts[pCount].update();
+          }
 	
 	var delta = clock.getDelta();
 	controls.update(delta); // Move camera
@@ -586,6 +593,57 @@ var starGeometry = new THREE.ExtrudeGeometry( starShape, extrudeSettings );
 
 function distance(x1, y1, x2, y2) {
 	return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+}
+
+
+var movementSpeed = 80;
+var totalObjects = 1000;
+var objectSize = 10;
+var sizeRandomness = 4000;
+var colors = [0xFF0FFF, 0xCCFF00, 0xFF000F, 0x996600, 0xFFFFFF];
+/////////////////////////////////
+var dirs = [];
+var parts = [];
+
+function ExplodeAnimation(x,y,z)
+{
+  var geometry = new THREE.Geometry();
+  
+  for (i = 0; i < totalObjects; i ++) 
+  { 
+    var vertex = new THREE.Vector3();
+    vertex.x = x;
+    vertex.y = y;
+    vertex.z = z;
+  
+    geometry.vertices.push( vertex );
+    dirs.push({x:(Math.random() * movementSpeed)-(movementSpeed/2),y:(Math.random() * movementSpeed)-(movementSpeed/2),z:(Math.random() * movementSpeed)-(movementSpeed/2)});
+  }
+  var material = new THREE.PointsMaterial( { size: objectSize,  color: colors[Math.round(Math.random() * colors.length)] });
+  var particles = new THREE.Points( geometry, material );
+  
+  this.object = particles;
+  this.status = true;
+  
+  this.xDir = (Math.random() * movementSpeed)-(movementSpeed/2);
+  this.yDir = (Math.random() * movementSpeed)-(movementSpeed/2);
+  this.zDir = (Math.random() * movementSpeed)-(movementSpeed/2);
+  
+  scene.add( this.object  ); 
+  
+  this.update = function(){
+    if (this.status == true){
+      var pCount = totalObjects;
+      while(pCount--) {
+        var particle =  this.object.geometry.vertices[pCount]
+        particle.y += dirs[pCount].y;
+        particle.x += dirs[pCount].x;
+        particle.z += dirs[pCount].z;
+      }
+      this.object.geometry.verticesNeedUpdate = true;
+    }
+  }
+  
 }
 
 // Stop moving around when the window is unfocused (keeps my sanity!)
