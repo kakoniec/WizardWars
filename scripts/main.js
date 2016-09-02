@@ -18,7 +18,7 @@ var WIDTH = window.innerWidth,
 	WALLHEIGHT = UNITSIZE * 1.5;
 	MOVESPEED = 100,
 	LOOKSPEED = 0.075,
-	BULLETMOVESPEED = MOVESPEED * 10,
+	BULLETMOVESPEED = MOVESPEED * 5,
 	NUMAI = 5,
 	PROJECTILEDAMAGE = 20,
 	MAP_WIDTH = map.length,
@@ -202,7 +202,7 @@ function animate(){
 	
 	}	
 	
-	// Update AI.
+	// Update opponents.
 	for (var i = opponents.length-1; i >= 0; i--) {
 		var a = opponents[i];
 		if (a.health <= 0) {
@@ -212,7 +212,7 @@ function animate(){
 			$('#score').html(kills * 100);
 			addOpponent();
 		}
-		// Move AI
+		// Move opponents
 		var r = Math.random();
 		if (r > 0.995) {
 			a.lastRandomX = Math.random() * 2 - 1;
