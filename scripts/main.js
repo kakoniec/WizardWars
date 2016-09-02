@@ -30,7 +30,7 @@ var WIDTH = window.innerWidth,
 
 var scene, camera, controls, geometry, material, mesh, loader, renderer, clock, backgroundCamera, backgroundScene, projector;
 
-var aiGeo = new THREE.CubeGeometry(40, 40, 40);
+var aiGeo = new THREE.CubeGeometry(120, 120, 120);
 var aiGeo2 = new THREE.CylinderGeometry( 1, 40*3, 40*3, 4 );
 
 var canvas, context;
@@ -128,6 +128,7 @@ function  init(){
 	document.body.appendChild(renderer.domElement);
 	
 	document.addEventListener('mousemove', onMouseMove, false);
+	document.addEventListener('keyup',onKeyPress, false);
 	
 	initWorld();
 
@@ -174,7 +175,7 @@ function animate(){
 				scene.remove(b);
 				a.health -= PROJECTILEDAMAGE;
 				var color = a.material.color, percent = a.health / 100;
-				a.material.color.setRGB(
+				a.children[0].material.color.setRGB(
 						percent * color.r,
 						percent * color.g,
 						percent * color.b
@@ -285,12 +286,17 @@ function animate(){
 }
 
 function addOpponent() {
+	var materials = [];
 	var c = getMapSector(camera.position);
-	var aiMaterial =  new THREE.MeshPhongMaterial( { color: 0xEE3333} );
+	var loader = new THREE.TextureLoader();
+	var face = loader.load("textures/scary-face.jpg");
+	var faceMaterial = new THREE.MeshPhongMaterial( {color: 0xEE3333 })
+	var aiMaterial =  new THREE.MeshPhongMaterial( {  color: 0xEE3333, transparent : true, opacity : 0.0} );
+	materials = [faceMaterial, aiMaterial, aiMaterial, aiMaterial, aiMaterial];
 	
 //	THREE.GeometryUtils.merge(aiGeo, aiGeo2);
 	var o = new THREE.Mesh(aiGeo, aiMaterial);
-	o.add(new THREE.Mesh(aiGeo2, aiMaterial));
+	o.add(new THREE.Mesh(aiGeo2, faceMaterial));
 	do {
 		var x = getRandBetween(0, MAP_WIDTH-1);
 		var z = getRandBetween(0, MAP_HEIGHT-1);
@@ -468,6 +474,18 @@ function onMouseMove(event) {
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
 	mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
 };
+
+function onKeyPress(event){
+	event.preventDefault();
+	if(event.keyCode == 27){
+		$(renderer.domElement).fadeOut();
+		$('#intro').fadeIn();
+		$('#intro').html('Click to start');
+		$('#intro').one('click', function() {
+			location = location;
+		});
+	}
+}
 
 function initOpponents() {
 	var opponent; 
