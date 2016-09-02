@@ -31,6 +31,7 @@ var WIDTH = window.innerWidth,
 var scene, camera, controls, geometry, material, mesh, loader, renderer, clock, backgroundCamera, backgroundScene, projector;
 
 var aiGeo = new THREE.CubeGeometry(40, 40, 40);
+var aiGeo2 = new THREE.CylinderGeometry( 1, 40*3, 40*3, 4 );
 
 var canvas, context;
 
@@ -148,8 +149,10 @@ function animate(){
 	controls.update(delta);
 	
 	// Update bullets. Walk backwards through the list so we can remove items.
+	
 	for (var i = bullets.length-1; i >= 0; i--) {
 		var b = bullets[i], p = b.position, d = b.ray.direction;
+		
 		if (checkWallCollision(p)) {
 			bullets.splice(i, 1);
 			scene.remove(b);
@@ -197,7 +200,7 @@ function animate(){
 			b.translateZ(speed * d.z);
 		}
 		
-		
+	
 	}	
 	
 	// Update AI.
@@ -278,7 +281,9 @@ function animate(){
 function addOpponent() {
 	var c = getMapSector(camera.position);
 	var aiMaterial = new THREE.MeshBasicMaterial({color: 0xEE3333});
+//	THREE.GeometryUtils.merge(aiGeo, aiGeo2);
 	var o = new THREE.Mesh(aiGeo, aiMaterial);
+	o.add(new THREE.Mesh(aiGeo2, aiMaterial));
 	do {
 		var x = getRandBetween(0, MAP_WIDTH-1);
 		var z = getRandBetween(0, MAP_HEIGHT-1);
@@ -429,7 +434,7 @@ function initWorld() {
 	//wallGeometry.computeVertexNormals();
 	var materials = [
 	                 new THREE.MeshPhongMaterial({map: textureLoader.load('textures/brick-wall.jpg'), bumpMap: textureLoader.load('textures/brick-wall-bump.jpg'), side: THREE.DoubleSide}),
-	                 new THREE.MeshLambertMaterial({map: textureLoader.load('textures/hedge.jpg'), bumpMap: textureLoader.load('textures/hedge_bump.jpg'), side: THREE.DoubleSide}),
+	                 new THREE.MeshPhongMaterial({map: textureLoader.load('textures/hedge.jpg'), bumpMap: textureLoader.load('textures/hedge_bump.jpg'), side: THREE.DoubleSide}),
 	                 new THREE.MeshLambertMaterial({color: 0xFBEBCD}),
 	                 ];
 	for (var i = 0; i < MAP_WIDTH; i++) {
@@ -479,35 +484,101 @@ function checkWallCollision(v) {
 var sphereMaterial = new THREE.MeshBasicMaterial({color: 0x333333});
 var sphereGeo = new THREE.SphereGeometry(2, 6, 6);
 
+var material1 = new THREE.MeshLambertMaterial( { color: 0xb00000, wireframe: false } );
+var material2 = new THREE.MeshLambertMaterial( { color: 0xff8000, wireframe: false } );
+
+var materials = [ material1, material2 ];
+
+var extrudeSettings = {
+				amount			: 20,
+				steps			: 1,
+				material1		: 1,
+				extrudeMaterial : 0,
+				bevelEnabled	: true,
+				bevelThickness  : 2,
+				bevelSize       : 4,
+				bevelSegments   : 1,
+			};
+
+var pts = [], numPts = 5;
+for ( var i = 0; i < numPts * 2; i ++ ) {
+	var l = i % 2 == 1 ? 10 : 20;
+	var a = i / numPts * Math.PI;
+	pts.push( new THREE.Vector2 ( Math.cos( a ) * l, Math.sin( a ) * l ) );
+}
+var starShape = new THREE.Shape( pts );
+var starGeometry = new THREE.ExtrudeGeometry( starShape, extrudeSettings );
+
 function createBullet(obj) {
 	if (obj === undefined) {
 		obj = camera;
 	}
-	var sphere = new THREE.Mesh(sphereGeo, sphereMaterial);
-	sphere.position.set(obj.position.x, obj.position.y * 0.8, obj.position.z);
+
+	var starMesh = new THREE.Mesh(starGeometry, new THREE.MultiMaterial(materials));
 
 	if (obj instanceof THREE.Camera) {
 		var vector = new THREE.Vector3(mouse.x, mouse.y, 1);
-//		projector.unprojectVector(vector, obj);
+
 		vector.unproject(obj);
-		sphere.ray = new THREE.Ray(
+		starMesh.ray = new THREE.Ray(
 				obj.position,
 				vector.sub(obj.position).normalize()
 		);
+		starMesh.position.x = camera.position.x;
+		starMesh.position.y = camera.position.y;
+		starMesh.position.z = camera.position.z;
 	}
 	else {
 		var vector = camera.position.clone();
-		sphere.ray = new THREE.Ray(
+		starMesh.ray = new THREE.Ray(
 				obj.position,
 				vector.sub(obj.position).normalize()
 		);
+		starMesh.position.x = obj.position.x;
+		starMesh.position.y = obj.position.y;
+		starMesh.position.z = obj.position.z;
+		
 	}
-	sphere.owner = obj;
+	starMesh.owner = obj;
+	starMesh.scale.set(0.1, 0.1, 0.1);
+	//	starMesh.position.x = 100;
+	// starMesh.position.y = UNITSIZE * .2;
+	// starMesh.position.z = -400;	
 	
-	bullets.push(sphere);
-	scene.add(sphere);
+	bullets.push(starMesh);
+	scene.add(starMesh);
+
+
+	return starMesh;
 	
-	return sphere;
+		
+	// var sphere = new THREE.Mesh(sphereGeo, sphereMaterial);
+	// sphere.position.set(obj.position.x, obj.position.y * 0.8, obj.position.z);
+
+
+	// if (obj instanceof THREE.Camera) {
+		// var vector = new THREE.Vector3(mouse.x, mouse.y, 1);
+
+		// vector.unproject(obj);
+		// sphere.ray = new THREE.Ray(
+				// obj.position,
+				// vector.sub(obj.position).normalize()
+		// );
+	// }
+	// else {
+		// var vector = camera.position.clone();
+		// sphere.ray = new THREE.Ray(
+				// obj.position,
+				// vector.sub(obj.position).normalize()
+		// );
+	// }
+	// sphere.owner = obj;
+	
+	// bullets.push(sphere);
+	// scene.add(sphere);
+	
+	// return sphere;
+	
 }
 
 function distance(x1, y1, x2, y2) {
