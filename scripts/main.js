@@ -18,7 +18,7 @@ var WIDTH = window.innerWidth,
 	WALLHEIGHT = UNITSIZE * 1.5;
 	MOVESPEED = 100,
 	LOOKSPEED = 0.075,
-	BULLETMOVESPEED = MOVESPEED * 5,
+	BULLETMOVESPEED = MOVESPEED * 10,
 	NUMAI = 5,
 	PROJECTILEDAMAGE = 20,
 	MAP_WIDTH = map.length,
@@ -152,7 +152,6 @@ function animate(){
 	
 	for (var i = bullets.length-1; i >= 0; i--) {
 		var b = bullets[i], p = b.position, d = b.ray.direction;
-		
 		if (checkWallCollision(p)) {
 			bullets.splice(i, 1);
 			scene.remove(b);
@@ -280,7 +279,8 @@ function animate(){
 
 function addOpponent() {
 	var c = getMapSector(camera.position);
-	var aiMaterial = new THREE.MeshBasicMaterial({color: 0xEE3333});
+	var aiMaterial =  new THREE.MeshPhongMaterial( { color: 0xEE3333} );
+	
 //	THREE.GeometryUtils.merge(aiGeo, aiGeo2);
 	var o = new THREE.Mesh(aiGeo, aiMaterial);
 	o.add(new THREE.Mesh(aiGeo2, aiMaterial));
@@ -302,73 +302,75 @@ function addOpponent() {
 }
 
 function addChessFigure() {
-	// var mtlLoader = new THREE.MTLLoader();
-	// mtlLoader.setPath('obj/Chess/');
-	// mtlLoader.load('chess.mtl', function(materials) {
-		// materials.preload();
-		// var objLoader = new THREE.OBJLoader();
-		// objLoader.setMaterials(materials);
-		// objLoader.setPath('obj/Chess/');
-		// objLoader.load('chess.obj', function(o) {
-			// var c = getMapSector(camera.position);
-			// do {
-				// var x = getRandBetween(0, MAP_WIDTH-1);
-				// var z = getRandBetween(0, MAP_HEIGHT-1);
-			// } while (map[x][z] > 0 || (x == c.x && z == c.z));
-			// x = Math.floor(x - MAP_WIDTH/2) * UNITSIZE;
-			// z = Math.floor(z - MAP_WIDTH/2) * UNITSIZE;
-			// o.position.set(x, UNITSIZE * 0.15, z);
-			// o.health = 100;
-			// o.pathPos = 1;
-			// o.lastRandomX = Math.random();
-			// o.lastRandomZ = Math.random();
-			// o.lastShot = Date.now(); // Higher-fidelity timers aren't a big deal here.
-			// opponents.push(o);
-			// scene.add(o);
-		// });
-	// });
-	
-	var mesh = null;
-
 	var mtlLoader = new THREE.MTLLoader();
-	mtlLoader.setBaseUrl( "obj/Chess/" );
-	mtlLoader.setPath( "obj/Chess/" );
-	mtlLoader.load( 'chess.mtl', function( materials ) {
-
+	mtlLoader.load('obj/Chess/chess.mtl', function(materials) {
 		materials.preload();
-
 		var objLoader = new THREE.OBJLoader();
-		objLoader.setMaterials( materials );
-		objLoader.setPath( "obj/Chess/" );
-		objLoader.load( 'chess.obj', function ( o ) {
+		objLoader.setMaterials(materials);
+		objLoader.load('obj/Chess/chess.obj', function(o) {
+			o.scale.set(0.01, 0.01, 0.01);
+			var c = getMapSector(camera.position);
+			do {
+				var x = getRandBetween(0, MAP_WIDTH-1);
+				var z = getRandBetween(0, MAP_HEIGHT-1);
+			} while (map[x][z] > 0 || (x == c.x && z == c.z));
+			x = Math.floor(x - MAP_WIDTH/2) * UNITSIZE;
+			z = Math.floor(z - MAP_WIDTH/2) * UNITSIZE;
+			o.position.set(x, UNITSIZE * 0.15, z);
+			o.health = 100;
+			o.pathPos = 1;
+			o.lastRandomX = Math.random();
+			o.lastRandomZ = Math.random();
+			o.lastShot = Date.now(); // Higher-fidelity timers aren't a big deal here.
+			opponents.push(o);
+			scene.add(o);
+		});
+	});
+	
+	// var mesh = null;
 
-		var c = getMapSector(camera.position);
-		do {
-			var x = getRandBetween(0, MAP_WIDTH-1);
-			var z = getRandBetween(0, MAP_HEIGHT-1);
-		} while (map[x][z] > 0 || (x == c.x && z == c.z));
-		x = Math.floor(x - MAP_WIDTH/2) * UNITSIZE;
-		z = Math.floor(z - MAP_WIDTH/2) * UNITSIZE;
-		o.position.set(x, UNITSIZE * 0.15, z);
-		o.health = 100;
-		o.pathPos = 1;
-		o.lastRandomX = Math.random();
-		o.lastRandomZ = Math.random();
-		o.lastShot = Date.now(); // Higher-fidelity timers aren't a big deal here.
-		opponents.push(o);
-		scene.add(o);
+	// var mtlLoader = new THREE.MTLLoader();
+	// mtlLoader.setBaseUrl( "obj/Chess/" );
+	// mtlLoader.setPath( "obj/Chess/" );
+	// mtlLoader.load( 'chess.mtl', function( materials ) {
 
-		} );
+		// materials.preload();
 
-	} );
+		// var objLoader = new THREE.OBJLoader();
+		// objLoader.setMaterials( materials );
+		// objLoader.setPath( "obj/Chess/" );
+		// objLoader.load( 'chess.obj', function ( o ) {
+
+		// var c = getMapSector(camera.position);
+		// do {
+			// var x = getRandBetween(0, MAP_WIDTH-1);
+			// var z = getRandBetween(0, MAP_HEIGHT-1);
+		// } while (map[x][z] > 0 || (x == c.x && z == c.z));
+		// x = Math.floor(x - MAP_WIDTH/2) * UNITSIZE;
+		// z = Math.floor(z - MAP_WIDTH/2) * UNITSIZE;
+		// o.position.set(x, UNITSIZE * 0.15, z);
+		// o.health = 100;
+		// o.pathPos = 1;
+		// o.lastRandomX = Math.random();
+		// o.lastRandomZ = Math.random();
+		// o.lastShot = Date.now(); // Higher-fidelity timers aren't a big deal here.
+		// opponents.push(o);
+		// scene.add(o);
+
+		// } );
+
+	// } );
 	
 	// var objLoader = new THREE.OBJLoader();
     // var material = new THREE.MeshBasicMaterial({color: 'yellow', side: THREE.DoubleSide});
     // objLoader.load('obj/Chess/chess.obj', function (obj) {
+		// console.log(obj.geometry.vertices.length);
         // obj.traverse(function (o) {
 
             // if (o instanceof THREE.Mesh) {
                 // o.material = material;
+				// o.scale.set(0.01, 0.01, 0.01);
+				// console.log(o.geometry.vertices.length);
 				// var c = getMapSector(camera.position);
 				// do {
 					// var x = getRandBetween(0, MAP_WIDTH-1);
@@ -464,6 +466,7 @@ function initOpponents() {
 	var opponent; 
 	for (var i = 0; i < NUMBER_OF_OPPONENTS; i++) {
 		addOpponent();
+//		addChessFigure();
 	}
 }
 
@@ -481,11 +484,16 @@ function checkWallCollision(v) {
 	var c = getMapSector(v);
 	return map[c.x][c.z] > 0;
 }
-var sphereMaterial = new THREE.MeshBasicMaterial({color: 0x333333});
-var sphereGeo = new THREE.SphereGeometry(2, 6, 6);
 
-var material1 = new THREE.MeshLambertMaterial( { color: 0xb00000, wireframe: false } );
-var material2 = new THREE.MeshLambertMaterial( { color: 0xff8000, wireframe: false } );
+
+
+function createBullet(obj) {
+	if (obj === undefined) {
+		obj = camera;
+	}
+
+	var material1 = new THREE.MeshLambertMaterial( { color: new THREE.Color(Math.random(), Math.random(), Math.random()), wireframe: false } );
+var material2 = new THREE.MeshLambertMaterial( { color: new THREE.Color(Math.random(), Math.random(), Math.random()), wireframe: false } );
 
 var materials = [ material1, material2 ];
 
@@ -508,11 +516,6 @@ for ( var i = 0; i < numPts * 2; i ++ ) {
 }
 var starShape = new THREE.Shape( pts );
 var starGeometry = new THREE.ExtrudeGeometry( starShape, extrudeSettings );
-
-function createBullet(obj) {
-	if (obj === undefined) {
-		obj = camera;
-	}
 
 	var starMesh = new THREE.Mesh(starGeometry, new THREE.MultiMaterial(materials));
 
