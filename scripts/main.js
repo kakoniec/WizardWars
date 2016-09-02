@@ -33,7 +33,7 @@ var scene, camera, controls, geometry, material, mesh, loader, renderer, clock, 
 var aiGeo = new THREE.CubeGeometry(120, 120, 120);
 var aiGeo2 = new THREE.CylinderGeometry( 1, 40*3, 40*3, 4 );
 
-var canvas, context;
+var canvas, context, score, scoreContext;
 
 var opponents = [], bullets = [];
 var maxHealth = 300;
@@ -52,6 +52,7 @@ $(document).ready(function(){
 	$('body').append('<div id="intro" class="custom" >Click to start</div>');
 		//health bar
 	$('body').append('<canvas id="canvas" width="500" height="50"></canvas>');
+	$('body').append('<canvas id="score" width="500" height="50"></canvas>');
 	$('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) {
 		e.preventDefault();
 		$(this).fadeOut();
@@ -115,10 +116,12 @@ function  init(){
 
 	// setup canvas for health bar
 	canvas = document.getElementById('canvas');
-	canvas.width = 500;
+	//canvas.width = 500;
 	canvas.height = 50;
 	context = canvas.getContext('2d');
 
+	score = document.getElementById('score');
+	scoreContext = score.getContext('2d');
 	
 	//renderer
 	renderer = new THREE.WebGLRenderer({antialias: true});
@@ -260,6 +263,11 @@ function animate(){
     context.fillStyle = "red";
     context.fillRect(object1.x, object1.y, object1.width * percent, object1.height);
 	
+	score.width = score.width;
+	scoreContext.fillStyle = "red";
+	scoreContext.font = "28px sans-serif";
+    scoreContext.fillText("Score " + kills,20, 20);
+	
 	//renderer
 	renderer.render(backgroundScene, backgroundCamera);
 	renderer.render(scene, camera);
@@ -286,13 +294,9 @@ function animate(){
 }
 
 function addOpponent() {
-	var materials = [];
 	var c = getMapSector(camera.position);
-	var loader = new THREE.TextureLoader();
-	var face = loader.load("textures/scary-face.jpg");
-	var faceMaterial = new THREE.MeshPhongMaterial( {color: 0xEE3333 })
-	var aiMaterial =  new THREE.MeshPhongMaterial( {  color: 0xEE3333, transparent : true, opacity : 0.0} );
-	materials = [faceMaterial, aiMaterial, aiMaterial, aiMaterial, aiMaterial];
+	var faceMaterial = new THREE.MeshPhongMaterial( {color: 0x544393 })
+	var aiMaterial =  new THREE.MeshPhongMaterial( {  transparent : true, opacity : 0.0} );
 	
 //	THREE.GeometryUtils.merge(aiGeo, aiGeo2);
 	var o = new THREE.Mesh(aiGeo, aiMaterial);
@@ -314,97 +318,7 @@ function addOpponent() {
 	scene.add(o);
 }
 
-function addChessFigure() {
-	var mtlLoader = new THREE.MTLLoader();
-	mtlLoader.load('obj/Chess/chess.mtl', function(materials) {
-		materials.preload();
-		var objLoader = new THREE.OBJLoader();
-		objLoader.setMaterials(materials);
-		objLoader.load('obj/Chess/chess.obj', function(o) {
-			o.scale.set(0.01, 0.01, 0.01);
-			var c = getMapSector(camera.position);
-			do {
-				var x = getRandBetween(0, MAP_WIDTH-1);
-				var z = getRandBetween(0, MAP_HEIGHT-1);
-			} while (map[x][z] > 0 || (x == c.x && z == c.z));
-			x = Math.floor(x - MAP_WIDTH/2) * UNITSIZE;
-			z = Math.floor(z - MAP_WIDTH/2) * UNITSIZE;
-			o.position.set(x, UNITSIZE * 0.15, z);
-			o.health = 100;
-			o.pathPos = 1;
-			o.lastRandomX = Math.random();
-			o.lastRandomZ = Math.random();
-			o.lastShot = Date.now(); // Higher-fidelity timers aren't a big deal here.
-			opponents.push(o);
-			scene.add(o);
-		});
-	});
-	
-	// var mesh = null;
 
-	// var mtlLoader = new THREE.MTLLoader();
-	// mtlLoader.setBaseUrl( "obj/Chess/" );
-	// mtlLoader.setPath( "obj/Chess/" );
-	// mtlLoader.load( 'chess.mtl', function( materials ) {
-
-		// materials.preload();
-
-		// var objLoader = new THREE.OBJLoader();
-		// objLoader.setMaterials( materials );
-		// objLoader.setPath( "obj/Chess/" );
-		// objLoader.load( 'chess.obj', function ( o ) {
-
-		// var c = getMapSector(camera.position);
-		// do {
-			// var x = getRandBetween(0, MAP_WIDTH-1);
-			// var z = getRandBetween(0, MAP_HEIGHT-1);
-		// } while (map[x][z] > 0 || (x == c.x && z == c.z));
-		// x = Math.floor(x - MAP_WIDTH/2) * UNITSIZE;
-		// z = Math.floor(z - MAP_WIDTH/2) * UNITSIZE;
-		// o.position.set(x, UNITSIZE * 0.15, z);
-		// o.health = 100;
-		// o.pathPos = 1;
-		// o.lastRandomX = Math.random();
-		// o.lastRandomZ = Math.random();
-		// o.lastShot = Date.now(); // Higher-fidelity timers aren't a big deal here.
-		// opponents.push(o);
-		// scene.add(o);
-
-		// } );
-
-	// } );
-	
-	// var objLoader = new THREE.OBJLoader();
-    // var material = new THREE.MeshBasicMaterial({color: 'yellow', side: THREE.DoubleSide});
-    // objLoader.load('obj/Chess/chess.obj', function (obj) {
-		// console.log(obj.geometry.vertices.length);
-        // obj.traverse(function (o) {
-
-            // if (o instanceof THREE.Mesh) {
-                // o.material = material;
-				// o.scale.set(0.01, 0.01, 0.01);
-				// console.log(o.geometry.vertices.length);
-				// var c = getMapSector(camera.position);
-				// do {
-					// var x = getRandBetween(0, MAP_WIDTH-1);
-					// var z = getRandBetween(0, MAP_HEIGHT-1);
-				// } while (map[x][z] > 0 || (x == c.x && z == c.z));
-				// x = Math.floor(x - MAP_WIDTH/2) * UNITSIZE;
-				// z = Math.floor(z - MAP_WIDTH/2) * UNITSIZE;
-				// o.position.set(x, UNITSIZE * 0.15, z);
-				// o.health = 100;
-				// o.pathPos = 1;
-				// o.lastRandomX = Math.random();
-				// o.lastRandomZ = Math.random();
-				// o.lastShot = Date.now(); // Higher-fidelity timers aren't a big deal here.
-				// opponents.push(o);
-				// scene.add(o);
-            // }
-
-        // });
-
-    // });
-}
 
 function initWorld() {	
 	
@@ -442,11 +356,9 @@ function initWorld() {
 	var light = new THREE.AmbientLight( 0x404040 ); // soft white light
 	scene.add( light );
 	
-	//scene.add(new THREE.AmbientLight(0xeef0ff));
 	
 	//walls
 	var wallGeometry = new THREE.CubeGeometry(UNITSIZE, WALLHEIGHT, UNITSIZE);
-	//wallGeometry.computeVertexNormals();
 	var materials = [
 	                 new THREE.MeshPhongMaterial({map: textureLoader.load('textures/brick-wall.jpg'), bumpMap: textureLoader.load('textures/brick-wall-bump.jpg'), side: THREE.DoubleSide}),
 	                 new THREE.MeshPhongMaterial({map: textureLoader.load('textures/hedge.jpg'), bumpMap: textureLoader.load('textures/hedge_bump.jpg'), side: THREE.DoubleSide}),
@@ -491,7 +403,6 @@ function initOpponents() {
 	var opponent; 
 	for (var i = 0; i < NUMBER_OF_OPPONENTS; i++) {
 		addOpponent();
-//		addChessFigure();
 	}
 }
 
@@ -569,9 +480,6 @@ var starGeometry = new THREE.ExtrudeGeometry( starShape, extrudeSettings );
 	}
 	starMesh.owner = obj;
 	starMesh.scale.set(0.1, 0.1, 0.1);
-	//	starMesh.position.x = 100;
-	// starMesh.position.y = UNITSIZE * .2;
-	// starMesh.position.z = -400;	
 	
 	bullets.push(starMesh);
 	scene.add(starMesh);
@@ -579,33 +487,6 @@ var starGeometry = new THREE.ExtrudeGeometry( starShape, extrudeSettings );
 
 	return starMesh;
 	
-		
-	// var sphere = new THREE.Mesh(sphereGeo, sphereMaterial);
-	// sphere.position.set(obj.position.x, obj.position.y * 0.8, obj.position.z);
-
-
-	// if (obj instanceof THREE.Camera) {
-		// var vector = new THREE.Vector3(mouse.x, mouse.y, 1);
-
-		// vector.unproject(obj);
-		// sphere.ray = new THREE.Ray(
-				// obj.position,
-				// vector.sub(obj.position).normalize()
-		// );
-	// }
-	// else {
-		// var vector = camera.position.clone();
-		// sphere.ray = new THREE.Ray(
-				// obj.position,
-				// vector.sub(obj.position).normalize()
-		// );
-	// }
-	// sphere.owner = obj;
-	
-	// bullets.push(sphere);
-	// scene.add(sphere);
-	
-	// return sphere;
 	
 }
 
