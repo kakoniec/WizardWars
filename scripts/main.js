@@ -33,12 +33,12 @@ var scene, camera, controls, geometry, material, mesh, loader, renderer, clock, 
 var aiGeo = new THREE.CubeGeometry(120, 120, 120);
 var aiGeo2 = new THREE.CylinderGeometry( 1, 40*3, 40*3, 4 );
 
-var canvas, context, score, scoreContext;
+var canvas, context, score, scoreContext, weapon, weaponContext;
 
 var opponents = [], bullets = [];
 var maxHealth = 300;
 var runAnim = true, mouse = { x: 0, y: 0 }, kills = 0, health = maxHealth;
-
+var wandMesh;
 	var object1 = {
 		x: 20,
 		y: 30,
@@ -51,8 +51,10 @@ var runAnim = true, mouse = { x: 0, y: 0 }, kills = 0, health = maxHealth;
 $(document).ready(function(){
 	$('body').append('<div id="intro" class="custom" >Click to start</div>');
 		//health bar
-	$('body').append('<canvas id="canvas" width="500" height="50"></canvas>');
-	$('body').append('<canvas id="score" width="500" height="50"></canvas>');
+	$('body').append('<canvas id="canvas" width="500"></canvas>');
+	$('body').append('<canvas id="score"></canvas>');
+	$('body').append('<canvas id="weapon" width="450" height="337" ></canvas>');
+	
 	$('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) {
 		e.preventDefault();
 		$(this).fadeOut();
@@ -116,12 +118,13 @@ function  init(){
 
 	// setup canvas for health bar
 	canvas = document.getElementById('canvas');
-	//canvas.width = 500;
-	canvas.height = 50;
 	context = canvas.getContext('2d');
 
 	score = document.getElementById('score');
 	scoreContext = score.getContext('2d');
+	
+	weapon = document.getElementById('weapon');
+	weaponContext = weapon.getContext('2d');
 	
 	//renderer
 	renderer = new THREE.WebGLRenderer({antialias: true});
@@ -287,7 +290,14 @@ function animate(){
           while(pCount--) {
             parts[pCount].update();
           }
+		  
+	// wandMesh.position.x = camera.position.x;
+	// wandMesh.position.y = camera.position.y + 10;
+	// wandMesh.position.z = -315;
 	
+	
+	weapon.width = weapon.width;
+	initWand();
 	var delta = clock.getDelta();
 	controls.update(delta); // Move camera
 	
@@ -375,8 +385,24 @@ function initWorld() {
 			}
 		}
 	}
+	
+	initWand();
 }
 
+function initWand() {
+	// var wandGeometry = new THREE.CylinderGeometry(3,4,100,20);
+	// var wandMaterial = new THREE.MeshPhongMaterial({color: 0xba67fc7});
+	// wandMesh = new THREE.Mesh(wandGeometry, wandMaterial);
+	
+	// wandMesh.position.x = camera.position.x;
+	// wandMesh.position.y = camera.position.y + 10;
+	// wandMesh.position.z = -315;
+	
+	// camera.add(wandMesh);
+	var img = new Image(450,337);
+	img.src = 'imports/wand.png';
+	weaponContext.drawImage(img,0,0);
+}
 
 // Follows the mouse event
 function onMouseMove(event) {
@@ -397,6 +423,7 @@ function onKeyPress(event){
 			location = location;
 		});
 	}
+
 }
 
 function initOpponents() {
