@@ -101,7 +101,7 @@ function  init(){
 	
 	 // Load the background texture
     var textureLoader = new THREE.TextureLoader();	 
-    var texture = textureLoader.load( 'imports/sky.jpg' );
+    var texture = textureLoader.load('imports/sky.jpg');
     var backgroundMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(2, 2, 0),
             new THREE.MeshBasicMaterial({
@@ -135,7 +135,10 @@ function  init(){
 	document.body.appendChild(renderer.domElement);
 	
 	document.addEventListener('mousemove', onMouseMove, false);
-	document.addEventListener('keyup',onKeyPress, false);
+	document.addEventListener('keyup',onKeyUp, false);
+	document.addEventListener('keydown',onKeyDown, false);
+	document.addEventListener('keypress',onKeyPress, false);
+
 	
 	initWorld();
 
@@ -288,24 +291,27 @@ function animate(){
 	}
 	
 	var pCount = parts.length;
-          while(pCount--) {
-            parts[pCount].update();
-          }
+        while(pCount--) {
+			parts[pCount].update();
+        }
 		  
-	// wandMesh.position.x = camera.position.x;
-	// wandMesh.position.y = camera.position.y + 10;
-	// wandMesh.position.z = -315;
-	
-	
-//	weapon.width = weapon.width;
-//	initWand();
+	//wand rotation
 	weaponContext.clearRect(0, 0, weapon.width, weapon.height);
 	weaponContext.translate(weapon.width/2, weapon.height/2);
-	weaponContext.rotate(mouse.x / 10.0);
-	weaponContext.translate(-weapon.width/2, -weapon.height/2);
-	weaponContext.drawImage(wandImg, 0, 15);
-	weaponContext.translate(weapon.width/2, weapon.height/2);
-	weaponContext.rotate(-mouse.x / 10.0);
+	if (mouse.x < 0.0) {
+		weaponContext.rotate(mouse.x / 10.0);
+		weaponContext.translate(-weapon.width/2, -weapon.height/2);
+		weaponContext.drawImage(wandImg, 0, 30);
+		weaponContext.translate(weapon.width/2, weapon.height/2);
+		weaponContext.rotate(-mouse.x / 10.0);
+	} else {
+		weaponContext.rotate(mouse.x);
+		weaponContext.translate(-weapon.width/2, -weapon.height/2);
+		weaponContext.drawImage(wandImg, 0, 30);
+		weaponContext.translate(weapon.width/2, weapon.height/2);
+		weaponContext.rotate(-mouse.x);
+	}
+	
 	weaponContext.translate(-weapon.width/2, -weapon.height/2);
 
 
@@ -424,7 +430,7 @@ function onMouseMove(event) {
 	
 };
 
-function onKeyPress(event){
+function onKeyUp(event){
 	event.preventDefault();
 	if(event.keyCode == 27){
 		$(renderer.domElement).fadeOut();
@@ -433,8 +439,22 @@ function onKeyPress(event){
 		$('#intro').one('click', function() {
 			location = location;
 		});
+		if (event.keyCode == 16) {
+			controls.movementSpeed = MOVESPEED;
+		}
 	}
+}
 
+function onKeyDown(event) {
+	if (event.keyCode == 16) {
+		controls.movementSpeed = MOVESPEED * 3;
+	}
+}
+
+function onKeyPress(event) {
+	if (event.keyCode == 16) {
+		controls.movementSpeed = MOVESPEED * 3;
+	}
 }
 
 function initOpponents() {
