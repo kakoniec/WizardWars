@@ -39,14 +39,15 @@ var opponents = [], bullets = [];
 var maxHealth = 300;
 var runAnim = true, mouse = { x: 0, y: 0 }, kills = 0, health = maxHealth;
 var wandMesh;
-	var object1 = {
-		x: 20,
-		y: 30,
-		width: 300,
-		height: 20
-	};
+var object1 = {
+	x: 20,
+	y: 30,
+	width: 300,
+	height: 20
+};
 
-
+var wandImg = new Image(450,337);
+wandImg.src = 'imports/wand.png';
 	
 $(document).ready(function(){
 	$('body').append('<div id="intro" class="custom" >Click to start</div>');
@@ -296,8 +297,18 @@ function animate(){
 	// wandMesh.position.z = -315;
 	
 	
-	weapon.width = weapon.width;
-	initWand();
+//	weapon.width = weapon.width;
+//	initWand();
+	weaponContext.clearRect(0, 0, weapon.width, weapon.height);
+	weaponContext.translate(weapon.width/2, weapon.height/2);
+	weaponContext.rotate(mouse.x / 10.0);
+	weaponContext.translate(-weapon.width/2, -weapon.height/2);
+	weaponContext.drawImage(wandImg, 0, 15);
+	weaponContext.translate(weapon.width/2, weapon.height/2);
+	weaponContext.rotate(-mouse.x / 10.0);
+	weaponContext.translate(-weapon.width/2, -weapon.height/2);
+
+
 	var delta = clock.getDelta();
 	controls.update(delta); // Move camera
 	
@@ -399,9 +410,8 @@ function initWand() {
 	// wandMesh.position.z = -315;
 	
 	// camera.add(wandMesh);
-	var img = new Image(450,337);
-	img.src = 'imports/wand.png';
-	weaponContext.drawImage(img,0,0);
+	
+	weaponContext.drawImage(wandImg,0,0);
 }
 
 // Follows the mouse event
@@ -411,6 +421,7 @@ function onMouseMove(event) {
 	event.preventDefault();
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
 	mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+	
 };
 
 function onKeyPress(event){
