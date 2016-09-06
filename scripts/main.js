@@ -564,6 +564,7 @@ var parts = [];
 
 function ExplodeAnimation(x,y,z)
 {
+	var loader = new THREE.TextureLoader();
   var geometry = new THREE.Geometry();
   
   for (i = 0; i < totalObjects; i ++) 
@@ -576,9 +577,10 @@ function ExplodeAnimation(x,y,z)
     geometry.vertices.push( vertex );
     dirs.push({x:(Math.random() * movementSpeed)-(movementSpeed/2),y:(Math.random() * movementSpeed)-(movementSpeed/2),z:(Math.random() * movementSpeed)-(movementSpeed/2)});
   }
-  var material = new THREE.PointsMaterial( { size: objectSize,  color: colors[Math.round(Math.random() * colors.length)] });
+  var material = new THREE.PointsMaterial( { size: objectSize, map: loader.load('textures/glow.png'), transparent: true,  color: new THREE.Color(Math.random(), Math.random(), Math.random()) });
   var particles = new THREE.Points( geometry, material );
   
+  material.size = 100.0;
   this.object = particles;
   this.status = true;
   
