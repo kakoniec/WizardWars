@@ -11,6 +11,7 @@ var map = [/*0 1 2 3 4 5 6 7 8 9*/
 			[1,1,1,1,1,1,1,1,1,1], //9
 ];
 
+//parameters
 var WIDTH = window.innerWidth,
 	HEIGHT = window.innerHeight,
 	ASPECT = WIDTH / HEIGHT,
@@ -28,17 +29,16 @@ var WIDTH = window.innerWidth,
 	OPPONENT_VELOCITY_Y = Math.random() * 2 - 1,
 	OPPONENT_VELOCITY_Z = Math.random() * 2 - 1;
 
-var scene, camera, controls, geometry, material, mesh, loader, renderer, clock, backgroundCamera, backgroundScene, projector;
-
+//global variables
+var scene, camera, controls, geometry, material, mesh, loader, renderer, clock, backgroundCamera, backgroundScene;
 var aiGeo = new THREE.CubeGeometry(120, 120, 120);
 var aiGeo2 = new THREE.CylinderGeometry( 1, 40*3, 40*3, 4 );
-
 var canvas, context, score, scoreContext, weapon, weaponContext;
-
 var opponents = [], bullets = [];
 var maxHealth = 300;
-var runAnim = true, mouse = { x: 0, y: 0 }, kills = 0, health = maxHealth;
-var wandMesh;
+var mouse = { x: 0, y: 0 }, kills = 0, health = maxHealth;
+
+//health bar
 var object1 = {
 	x: 20,
 	y: 30,
@@ -64,7 +64,7 @@ $(document).ready(function(){
 	});
 });
 
-// Handle window resizing
+//window resizing
 $(window).resize(function() {
 	WIDTH = window.innerWidth;
 	HEIGHT = window.innerHeight;
@@ -83,23 +83,21 @@ $(window).resize(function() {
 function  init(){
 
 	clock = new THREE.Clock();
-	scene = new THREE.Scene(); // Holds all objects in the canvas
-	projector = new THREE.Projector();
+	scene = new THREE.Scene();
 	scene.fog = new THREE.FogExp2(0xcccfbc, 0.00125); // color, density
 	
-	camera = new THREE.PerspectiveCamera(60, ASPECT, 1, 10000); // FOV, aspect, near, far
+	camera = new THREE.PerspectiveCamera(60, ASPECT, 1, 10000); //FOV, aspect, near, far
 	camera.position.y = UNITSIZE * .2;
 	camera.position.z = -315;
 	scene.add(camera);
 	
-	controls = new THREE.FirstPersonControls(camera);
+	controls = new THREE.FirstPersonControls(camera); //First Person Shooter view
 	controls.movementSpeed = MOVESPEED;
 	controls.lookSpeed = LOOKSPEED;
-	controls.lookVertical = false; // Temporary solution; play on flat surfaces only
+	controls.lookVertical = false;
 	controls.noFly = true;
 	
-	
-	 // Load the background texture
+	//load the background texture
     var textureLoader = new THREE.TextureLoader();	 
     var texture = textureLoader.load('imports/sky.jpg');
     var backgroundMesh = new THREE.Mesh(
@@ -111,29 +109,32 @@ function  init(){
     backgroundMesh.material.depthTest = false;
     backgroundMesh.material.depthWrite = false;
 
-    // Create your background scene
+    //create background scene
     backgroundScene = new THREE.Scene();
     backgroundCamera = new THREE.Camera();
-    backgroundScene .add(backgroundCamera );
-    backgroundScene .add(backgroundMesh );
+    backgroundScene.add(backgroundCamera);
+    backgroundScene.add(backgroundMesh);
 
-	// setup canvas for health bar
+	//setup canvas for health bar
 	canvas = document.getElementById('canvas');
 	context = canvas.getContext('2d');
 
+	//setup canvas for score count
 	score = document.getElementById('score');
 	scoreContext = score.getContext('2d');
 	
+	//setup canvas for weapon
 	weapon = document.getElementById('weapon');
 	weaponContext = weapon.getContext('2d');
 	
 	//renderer
 	renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setSize(WIDTH, HEIGHT);
-	renderer.domElement.style.backgroundColor = '#D6F1FF'; // easier to see
+	renderer.domElement.style.backgroundColor = '#D6F1FF';
 	renderer.autoClear = false;
 	document.body.appendChild(renderer.domElement);
 	
+	//register event listener functions
 	document.addEventListener('mousemove', onMouseMove, false);
 	document.addEventListener('keyup',onKeyUp, false);
 	document.addEventListener('keydown',onKeyDown, false);
@@ -144,48 +145,44 @@ function  init(){
 
 	initOpponents();
 	
-	// Shoot on click
+	//shoot on click
 	$(document).click(function(e) {
 		e.preventDefault();
-		if (e.which === 1) { // Left click only
+		if (e.which === 1) { //left click only
 			createBullet();
 		}
 	});
 	
 }
 
-
 function animate(){
 	var delta = clock.getDelta(), speed = delta * BULLETMOVESPEED;
 	var aispeed = delta * MOVESPEED;
 	controls.update(delta);
 	
-	// Update bullets. Walk backwards through the list so we can remove items.
-	
+	//update bullets
 	for (var i = bullets.length-1; i >= 0; i--) {
 		var b = bullets[i], p = b.position, d = b.ray.direction;
 		if (checkWallCollision(p)) {
-			bullets.splice(i, 1);
-			scene.remove(b);
+			bullets.splice(i, 1); //delete bullet from array
+			scene.remove(b); //delete bullet from scene
 			continue;
 		}
 		hit = false;
-		//Collide with AI
+		//bullet collides with opponent
 		var hit = false;
 		for (var j = opponents.length-1; j >= 0; j--) {
-			var a = opponents[j];
-			var v = a.geometry.vertices[0];
-			var c = a.position;
+			var opponent = opponents[j];
+			var v = opponent.geometry.vertices[0];
+			var c = opponent.position;
 			var x = Math.abs(v.x), z = Math.abs(v.z);
 
-			if (p.x < c.x + x && p.x > c.x - x &&
-					p.z < c.z + z && p.z > c.z - z &&
-					b.owner != a) {
+			if (p.x < c.x + x && p.x > c.x - x && p.z < c.z + z && p.z > c.z - z && b.owner != opponent) {
 				bullets.splice(i, 1);
 				scene.remove(b);
-				a.health -= PROJECTILEDAMAGE;
-				var color = a.material.color, percent = a.health / 100;
-				a.children[0].material.color.setRGB(
+				opponent.health -= PROJECTILEDAMAGE;
+				var color = opponent.material.color, percent = opponent.health / 100;
+				opponent.children[0].material.color.setRGB(
 						percent * color.r,
 						percent * color.g,
 						percent * color.b
@@ -194,71 +191,62 @@ function animate(){
 				break;
 			}
 		}
-		// Bullet hits player
+		//bullet collides with player
 		if (distance(p.x, p.z, camera.position.x, camera.position.z) < 25 && b.owner != camera) {
-			$('#hurt').fadeIn(75);
 			health -= 10;
 			if (health < 0) health = 0;
-			val = health < 25 ? '<span style="color: darkRed">' + health + '</span>' : health;
-			$('#health').html(val);
 			bullets.splice(i, 1);
 			scene.remove(b);
-			$('#hurt').fadeOut(350);
 		}
-		if (!hit) {
+		if (!hit) { //if bullet didn't hit anything, it mooves along
 			b.translateX(speed * d.x);
-			//bullets[i].translateY(speed * bullets[i].direction.y);
 			b.translateZ(speed * d.z);
 		}
-		
-	
+
 	}	
 	
-	// Update opponents.
+	//update opponents
 	for (var i = opponents.length-1; i >= 0; i--) {
-		var a = opponents[i];
-		if (a.health <= 0) {
+		var opponent = opponents[i];
+		if (opponent.health <= 0) { //opponent killed
 			opponents.splice(i, 1);
-			scene.remove(a);
-			parts.push(new ExplodeAnimation(a.position.x, a.position.y, a.position.z));
+			scene.remove(opponent);
+			parts.push(new ExplodeAnimation(opponent.position.x, opponent.position.y, opponent.position.z)); //new explosion
 			kills++;
 			$('#score').html(kills * 100);
 			addOpponent();
 		}
-		// Move opponents
+		//move opponents
 		var r = Math.random();
 		if (r > 0.995) {
-			a.lastRandomX = Math.random() * 2 - 1;
-			a.lastRandomZ = Math.random() * 2 - 1;
+			opponent.lastRandomX = Math.random() * 2 - 1;
+			opponent.lastRandomZ = Math.random() * 2 - 1;
 		}
-		a.translateX(aispeed * a.lastRandomX);
-		a.translateZ(aispeed * a.lastRandomZ);
-		var c = getMapSector(a.position);
-		if (c.x < 0 || c.x >= MAP_WIDTH || c.y < 0 || c.y >= MAP_HEIGHT || checkWallCollision(a.position)) {
-			a.translateX(-2 * aispeed * a.lastRandomX);
-			a.translateZ(-2 * aispeed * a.lastRandomZ);
-			a.lastRandomX = Math.random() * 2 - 1;
-			a.lastRandomZ = Math.random() * 2 - 1;
+		opponent.translateX(aispeed * opponent.lastRandomX);
+		opponent.translateZ(aispeed * opponent.lastRandomZ);
+		var c = getMapSector(opponent.position);
+		if (c.x < 0 || c.x >= MAP_WIDTH || c.y < 0 || c.y >= MAP_HEIGHT || checkWallCollision(opponent.position)) {
+			opponent.translateX(-2 * aispeed * opponent.lastRandomX);
+			opponent.translateZ(-2 * aispeed * opponent.lastRandomZ);
+			opponent.lastRandomX = Math.random() * 2 - 1;
+			opponent.lastRandomZ = Math.random() * 2 - 1;
 		}
 		if (c.x < -1 || c.x > MAP_WIDTH || c.z < -1 || c.z > MAP_HEIGHT) {
 			opponents.splice(i, 1);
-			scene.remove(a);
+			scene.remove(opponent);
 			addOpponent();
 		}
 		
 		var cc = getMapSector(camera.position);
-		if (Date.now() > a.lastShot + 750 && distance(c.x, c.z, cc.x, cc.z) < 2) {
-			createBullet(a);
-			a.lastShot = Date.now();
+		if (Date.now() > opponent.lastShot + 750 && distance(c.x, c.z, cc.x, cc.z) < 2) {
+			createBullet(opponent);
+			opponent.lastShot = Date.now();
 		}
 	}			
 	
 	//health bar
-	// Clear the canvas
-    canvas.width = canvas.width;
-    
-    // Calculate health bar percent
-    var percent = health / maxHealth;
+	canvas.width = canvas.width;//clear the canvas
+    var percent = health / maxHealth; //calculate health bar percent
 
     context.fillStyle = "Red";
     context.font = "18px sans-serif";
@@ -280,7 +268,7 @@ function animate(){
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);
 	
-	//Death
+	//player's death
 	if (health <= 0) {
 		$(renderer.domElement).fadeOut();
 		$('#intro').fadeIn();
@@ -290,6 +278,7 @@ function animate(){
 		});
 	}
 	
+	//update explosion animations
 	var pCount = parts.length;
         while(pCount--) {
 			parts[pCount].update();
@@ -311,9 +300,7 @@ function animate(){
 		weaponContext.translate(weapon.width/2, weapon.height/2);
 		weaponContext.rotate(-mouse.x);
 	}
-	
 	weaponContext.translate(-weapon.width/2, -weapon.height/2);
-
 
 	var delta = clock.getDelta();
 	controls.update(delta); // Move camera
@@ -322,11 +309,10 @@ function animate(){
 
 function addOpponent() {
 	var c = getMapSector(camera.position);
-	var faceMaterial = new THREE.MeshPhongMaterial( {color: 0x544393 })
-	var aiMaterial =  new THREE.MeshPhongMaterial( {  transparent : true, opacity : 0.0} );
-	
-//	THREE.GeometryUtils.merge(aiGeo, aiGeo2);
-	var o = new THREE.Mesh(aiGeo, aiMaterial);
+	var faceMaterial = new THREE.MeshPhongMaterial({color: 0x544393 })
+	var cubeMaterial =  new THREE.MeshPhongMaterial({transparent : true, opacity : 0.0});
+
+	var o = new THREE.Mesh(aiGeo, cubeMaterial);
 	o.add(new THREE.Mesh(aiGeo2, faceMaterial));
 	do {
 		var x = getRandBetween(0, MAP_WIDTH-1);
@@ -336,24 +322,19 @@ function addOpponent() {
 	z = Math.floor(z - MAP_WIDTH/2) * UNITSIZE;
 	o.position.set(x, UNITSIZE * 0.15, z);
 	o.health = 100;
-	//o.path = getAIpath(o);
 	o.pathPos = 1;
 	o.lastRandomX = Math.random();
 	o.lastRandomZ = Math.random();
-	o.lastShot = Date.now(); // Higher-fidelity timers aren't a big deal here.
+	o.lastShot = Date.now();
 	opponents.push(o);
 	scene.add(o);
 }
-
-
 
 function initWorld() {	
 	
 	//floor
 	var textureLoader = new THREE.TextureLoader();
-
-	var maxAnisotropy = renderer.getMaxAnisotropy();
-
+	var maxAnisotropy = renderer.getMaxAnisotropy(); //rozmycie w oddali
 	var texture = textureLoader.load("textures/stone.jpg");
 	var material = new THREE.MeshPhongMaterial();
 	material.map = texture;
@@ -407,23 +388,12 @@ function initWorld() {
 }
 
 function initWand() {
-	// var wandGeometry = new THREE.CylinderGeometry(3,4,100,20);
-	// var wandMaterial = new THREE.MeshPhongMaterial({color: 0xba67fc7});
-	// wandMesh = new THREE.Mesh(wandGeometry, wandMaterial);
-	
-	// wandMesh.position.x = camera.position.x;
-	// wandMesh.position.y = camera.position.y + 10;
-	// wandMesh.position.z = -315;
-	
-	// camera.add(wandMesh);
-	
 	weaponContext.drawImage(wandImg,0,0);
 }
 
-// Follows the mouse event
 function onMouseMove(event) {
 
-	// Update the mouse variable
+	//update the mouse variable
 	event.preventDefault();
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
 	mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
@@ -439,9 +409,9 @@ function onKeyUp(event){
 		$('#intro').one('click', function() {
 			location = location;
 		});
-		if (event.keyCode == 16) {
-			controls.movementSpeed = MOVESPEED;
-		}
+	}
+	if (event.keyCode == 16) {
+		controls.movementSpeed = MOVESPEED;
 	}
 }
 
@@ -479,17 +449,15 @@ function checkWallCollision(v) {
 	return map[c.x][c.z] > 0;
 }
 
-
-
 function createBullet(obj) {
 	if (obj === undefined) {
 		obj = camera;
 	}
 
-	var material1 = new THREE.MeshLambertMaterial( { color: new THREE.Color(Math.random(), Math.random(), Math.random()), wireframe: false } );
-var material2 = new THREE.MeshLambertMaterial( { color: new THREE.Color(Math.random(), Math.random(), Math.random()), wireframe: false } );
+var material1 = new THREE.MeshLambertMaterial({color: new THREE.Color(Math.random(), Math.random(), Math.random()), wireframe: false});
+var material2 = new THREE.MeshLambertMaterial({color: new THREE.Color(Math.random(), Math.random(), Math.random()), wireframe: false});
 
-var materials = [ material1, material2 ];
+var materials = [material1, material2];
 
 var extrudeSettings = {
 				amount			: 20,
@@ -503,13 +471,13 @@ var extrudeSettings = {
 			};
 
 var pts = [], numPts = 5;
-for ( var i = 0; i < numPts * 2; i ++ ) {
+for (var i = 0; i < numPts * 2; i ++) {
 	var l = i % 2 == 1 ? 10 : 20;
 	var a = i / numPts * Math.PI;
-	pts.push( new THREE.Vector2 ( Math.cos( a ) * l, Math.sin( a ) * l ) );
+	pts.push(new THREE.Vector2(Math.cos(a) * l, Math.sin(a) * l));
 }
-var starShape = new THREE.Shape( pts );
-var starGeometry = new THREE.ExtrudeGeometry( starShape, extrudeSettings );
+var starShape = new THREE.Shape(pts);
+var starGeometry = new THREE.ExtrudeGeometry(starShape, extrudeSettings);
 
 	var starMesh = new THREE.Mesh(starGeometry, new THREE.MultiMaterial(materials));
 
@@ -542,70 +510,62 @@ var starGeometry = new THREE.ExtrudeGeometry( starShape, extrudeSettings );
 	bullets.push(starMesh);
 	scene.add(starMesh);
 
-
 	return starMesh;
-	
-	
 }
 
 function distance(x1, y1, x2, y2) {
 	return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
 }
 
-
+//explosion variables
 var movementSpeed = 80;
 var totalObjects = 1000;
 var objectSize = 10;
-var sizeRandomness = 4000;
-var colors = [0xFF0FFF, 0xCCFF00, 0xFF000F, 0x996600, 0xFFFFFF];
-/////////////////////////////////
 var dirs = [];
 var parts = [];
 
 function ExplodeAnimation(x,y,z)
 {
 	var loader = new THREE.TextureLoader();
-  var geometry = new THREE.Geometry();
-  
-  for (i = 0; i < totalObjects; i ++) 
-  { 
-    var vertex = new THREE.Vector3();
-    vertex.x = x;
-    vertex.y = y;
-    vertex.z = z;
-  
-    geometry.vertices.push( vertex );
-    dirs.push({x:(Math.random() * movementSpeed)-(movementSpeed/2),y:(Math.random() * movementSpeed)-(movementSpeed/2),z:(Math.random() * movementSpeed)-(movementSpeed/2)});
-  }
-  var material = new THREE.PointsMaterial( { size: objectSize, map: loader.load('textures/glow.png'), transparent: true,  color: new THREE.Color(Math.random(), Math.random(), Math.random()) });
-  var particles = new THREE.Points( geometry, material );
-  
-  material.size = 100.0;
-  this.object = particles;
-  this.status = true;
-  
-  this.xDir = (Math.random() * movementSpeed)-(movementSpeed/2);
-  this.yDir = (Math.random() * movementSpeed)-(movementSpeed/2);
-  this.zDir = (Math.random() * movementSpeed)-(movementSpeed/2);
-  
-  scene.add( this.object  ); 
-  
-  this.update = function(){
-    if (this.status == true){
-      var pCount = totalObjects;
-      while(pCount--) {
-        var particle =  this.object.geometry.vertices[pCount]
-        particle.y += dirs[pCount].y;
-        particle.x += dirs[pCount].x;
-        particle.z += dirs[pCount].z;
-      }
-      this.object.geometry.verticesNeedUpdate = true;
-    }
-  }
-  
+	var geometry = new THREE.Geometry();
+
+	for (i = 0; i < totalObjects; i ++) { 
+		var vertex = new THREE.Vector3();
+		vertex.x = x;
+		vertex.y = y;
+		vertex.z = z;
+
+		geometry.vertices.push( vertex );
+		dirs.push({x:(Math.random() * movementSpeed)-(movementSpeed/2),y:(Math.random() * movementSpeed)-(movementSpeed/2),z:(Math.random() * movementSpeed)-(movementSpeed/2)});
+	}
+	var material = new THREE.PointsMaterial( { size: objectSize, map: loader.load('textures/glow.png'), transparent: true,  color: new THREE.Color(Math.random(), Math.random(), Math.random())});
+	var particles = new THREE.Points( geometry, material );
+
+	material.size = 100.0;
+	this.object = particles;
+	this.status = true;
+
+	this.xDir = (Math.random() * movementSpeed)-(movementSpeed/2);
+	this.yDir = (Math.random() * movementSpeed)-(movementSpeed/2);
+	this.zDir = (Math.random() * movementSpeed)-(movementSpeed/2);
+
+	scene.add(this.object); 
+
+	this.update = function(){
+		if (this.status == true){
+			var pCount = totalObjects;
+			while(pCount--) {
+				var particle = this.object.geometry.vertices[pCount]
+				particle.y += dirs[pCount].y;
+				particle.x += dirs[pCount].x;
+				particle.z += dirs[pCount].z;
+			}
+			this.object.geometry.verticesNeedUpdate = true;
+		}
+	}
 }
 
-// Stop moving around when the window is unfocused (keeps my sanity!)
+//stop moving around when the window is unfocused
 $(window).focus(function() {
 	if (controls) controls.freeze = false;
 });
